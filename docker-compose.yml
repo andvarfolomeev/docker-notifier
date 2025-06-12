@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+  dockernotify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docker-notifier
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    user: "${UID:-0}:${GID:-0}"
+    command: >
+      /app/docker-notifier
+        --interval 1
+        --label-enable
+        --telegram-token "8124130178:AAGfJhAW_SSJ_nmuwv7l_grCTBN1bkUUuM8"
+        --telegram-chat-id "-4845844830"
+        --error-pattern "ERROR"
+        --error-pattern "FATAL"
+        --error-pattern "Exception"
+        --debug
+
+  example-service:
+    image: alpine:latest
+    container_name: example-service
+    labels:
+      - "com.andvarfolomeev.dockernotify.enable=true"
+    command: >
+      sh -c "while true; do echo 'Normal log line'; sleep 5; echo 'ERROR: This is an error message'; sleep 10; done"

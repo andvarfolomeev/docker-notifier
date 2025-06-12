@@ -1,4 +1,3 @@
-# Variables
 BIN_NAME := dockernotifier
 BUILD_DIR := ./bin
 CMD_DIR := ./cmd/docker-notifier
@@ -6,13 +5,12 @@ GO_FILES := $(shell find . -name "*.go" -type f)
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS := -ldflags "-X main.version=$(VERSION)"
 
-# Build settings
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 
-.PHONY: all build clean test lint deps install run
+.PHONY: all build clean test lint deps install run docker-build docker-run
 
-all: clean build
+all: clean build docker-build
 
 build:
 	@echo "Building $(BIN_NAME)..."
@@ -41,7 +39,7 @@ lint:
 deps:
 	@echo "Installing dependencies..."
 	@go get -v ./...
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install @latest
 
 install: build
 	@echo "Installing $(BIN_NAME)..."
@@ -50,3 +48,12 @@ install: build
 run: build
 	@echo "Running $(BIN_NAME)..."
 	@$(BUILD_DIR)/$(BIN_NAME) $(ARGS)
+
+docker-build:
+	@echo "Building Docker image..."
+	@docker build -t $(BIN_NAME):$(VERSION) .
+	@echo "Docker image built: $(BIN_NAME):$(VERSION)"
+
+docker-run:
+	@echo "Running Docker container..."
+	@docker run --rm -v /var/run/docker.sock:/var/run/docker.sock $(BIN_NAME):$(VERSION) $(ARGS)
