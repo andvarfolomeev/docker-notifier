@@ -3,10 +3,13 @@ package alerts
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/andvarfolomeev/docker-notifier/internal/telegram"
 	"github.com/andvarfolomeev/docker-notifier/internal/watcher"
 )
+
+const timeout = 2 * time.Second
 
 func RunDispatcher(ctx context.Context, ch <-chan *watcher.MatchedLog, telegramClient *telegram.Client, log *slog.Logger) {
 	for {
@@ -17,7 +20,10 @@ func RunDispatcher(ctx context.Context, ch <-chan *watcher.MatchedLog, telegramC
 			}
 
 			message := PrepareMessage(match)
-			if err := telegramClient.SendMessage(ctx, message); err != nil {
+			sendCtx, cancel := context.WithTimeout(ctx, timeout)
+			err := telegramClient.SendMessage(sendCtx, message)
+			cancel()
+			if err != nil {
 				log.Error("Failed to send message", "err", err)
 			}
 
