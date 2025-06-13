@@ -12,6 +12,8 @@ import (
 	"github.com/andvarfolomeev/docker-notifier/internal/logfilter"
 )
 
+const maxConsecutiveFailures = 5
+
 type MatchedLog struct {
 	Container container.Container
 	Line      *logfilter.MatchedLine
