@@ -2,6 +2,7 @@ version: "3"
 
 services:
   dockernotify:
+    env_file: .env
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,8 +15,8 @@ services:
       /app/docker-notifier
         --interval 1
         --label-enable
-        --telegram-token "8124130178:AAGfJhAW_SSJ_nmuwv7l_grCTBN1bkUUuM8"
-        --telegram-chat-id "-4845844830"
+        --telegram-token "${TELEGRAM_TOKEN}"
+        --telegram-chat-id "${TELEGRAM_CHAT_ID}"
         --error-pattern "ERROR"
         --error-pattern "FATAL"
         --error-pattern "Exception"
