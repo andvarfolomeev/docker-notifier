@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andvarfolomeev/docker-notifier/internal/alerts"
 	"github.com/andvarfolomeev/docker-notifier/internal/config"
 	"github.com/andvarfolomeev/docker-notifier/internal/container"
 	"github.com/andvarfolomeev/docker-notifier/internal/telegram"
@@ -85,24 +86,7 @@ func main() {
 
 	w.Start(ctx)
 
-	go func() {
-		for {
-			select {
-			case match, ok := <-w.C:
-				if !ok {
-					return
-				}
-				message := prepareMessage(match)
-				err := telegramClient.SendMessage(ctx, message)
-				if err != nil {
-					log.Error("Failed to send message", "err", err)
-				}
-			case <-ctx.Done():
-				log.Error("closed", "err", ctx.Err())
-				return
-			}
-		}
-	}()
+	go alerts.RunDispatcher(ctx, w.C, telegramClient, log)
 
 	log.Info("Watcher started, polling logs", "interval", cfg.Interval)
 	if cfg.LabelEnable {
@@ -117,20 +101,4 @@ func main() {
 
 	cancel()
 	w.Cleanup()
-}
-
-func prepareMessage(match *watcher.MatchedLog) string {
-	errorLine := match.Line.Content
-	if len(errorLine) > 100 {
-		errorLine = errorLine[:100]
-	}
-
-	messageLines := []string{
-		fmt.Sprintf("🚨 Error detected!"),
-		fmt.Sprintf("Container ID = %s; Container name = %s", match.Container.ID, match.Container.Name),
-		fmt.Sprintf("Line: \"%s\"", errorLine),
-	}
-	message := strings.Join(messageLines, "\n")
-
-	return message
 }
