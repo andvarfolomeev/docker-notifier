@@ -11,23 +11,23 @@ type Container struct {
 	Name string
 }
 
-func containerName(container types.Container) string {
+func ContainerName(container types.Container) string {
 	if len(container.Names) > 0 {
 		name := container.Names[0]
 		return strings.TrimPrefix(name, "/")
 	}
-	if len(container.ID) >= shortIDLen {
-		return container.ID[:shortIDLen]
+	if len(container.ID) >= ShortIDLen {
+		return container.ID[:ShortIDLen]
 	}
 	return container.ID
 }
 
-func convertContainers(dockerContainers []types.Container) []Container {
+func ConvertContainers(dockerContainers []types.Container) []Container {
 	containers := make([]Container, 0, len(dockerContainers))
 	for _, dockerContainer := range dockerContainers {
 		containers = append(containers, Container{
 			ID:   dockerContainer.ID,
-			Name: containerName(dockerContainer),
+			Name: ContainerName(dockerContainer),
 		})
 	}
 	return containers

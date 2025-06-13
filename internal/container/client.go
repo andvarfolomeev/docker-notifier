@@ -15,8 +15,8 @@ type ClientOptions struct {
 }
 
 type Client struct {
-	sdk  DockerSDK
-	opts *ClientOptions
+	SDK  DockerSDK
+	Opts *ClientOptions
 }
 
 func NewClient(opts *ClientOptions) (*Client, error) {
@@ -26,19 +26,19 @@ func NewClient(opts *ClientOptions) (*Client, error) {
 		return nil, fmt.Errorf("Failed to init docker client: %w", err)
 	}
 
-	return &Client{cli, opts}, nil
+	return &Client{SDK: cli, Opts: opts}, nil
 }
 
 func (dc *Client) RunningContainers(ctx context.Context) ([]Container, error) {
-	filterArgs := runningContainerFilters(dc.opts)
-	dockerContainers, err := dc.sdk.ContainerList(ctx, types.ContainerListOptions{
+	filterArgs := RunningContainerFilters(dc.Opts)
+	dockerContainers, err := dc.SDK.ContainerList(ctx, types.ContainerListOptions{
 		Filters: filterArgs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to list containers: %w", err)
 	}
 
-	containers := convertContainers(dockerContainers)
+	containers := ConvertContainers(dockerContainers)
 	return containers, nil
 }
 
@@ -51,11 +51,11 @@ func (dc *Client) ContainerLogs(ctx context.Context, id, since string, tail int)
 		return nil, errors.New("container ID cannot be empty")
 	}
 
-	logCtx, cancel := context.WithTimeout(ctx, pingTimeout)
+	logCtx, cancel := context.WithTimeout(ctx, PingTimeout)
 	defer cancel()
 
-	dockerOpts := containerLogsOptions(since, tail)
-	logs, err := dc.sdk.ContainerLogs(logCtx, id, dockerOpts)
+	dockerOpts := ContainerLogsOptions(since, tail)
+	logs, err := dc.SDK.ContainerLogs(logCtx, id, dockerOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get logs for container %s: %w", id, err)
 	}
@@ -70,8 +70,8 @@ func (dc *Client) ContainerLogs(ctx context.Context, id, since string, tail int)
 }
 
 func (dc *Client) Close() error {
-	if dc.sdk != nil {
-		return dc.sdk.Close()
+	if dc.SDK != nil {
+		return dc.SDK.Close()
 	}
 	return nil
 }

@@ -7,18 +7,18 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-func runningContainerFilters(opts *ClientOptions) filters.Args {
+func RunningContainerFilters(opts *ClientOptions) filters.Args {
 	filterArgs := filters.NewArgs()
 	filterArgs.Add("status", "running")
 
 	if opts.LabelEnabled {
-		filterArgs.Add("label", fmt.Sprintf("%s=%s", labelEnableKey, labelEnableValue))
+		filterArgs.Add("label", fmt.Sprintf("%s=%s", LabelEnableKey, LabelEnableValue))
 	}
 
 	return filterArgs
 }
 
-func containerLogsOptions(since string, tail int) types.ContainerLogsOptions {
+func ContainerLogsOptions(since string, tail int) types.ContainerLogsOptions {
 	var tailStr string
 	if tail > 0 {
 		tailStr = fmt.Sprintf("%d", tail)

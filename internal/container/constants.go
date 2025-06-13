@@ -3,8 +3,8 @@ package container
 import "time"
 
 const (
-	labelEnableKey   = "com.andvarfolomeev.dockernotify.enable"
-	labelEnableValue = "true"
-	pingTimeout      = 5 * time.Second
-	shortIDLen       = 12
+	LabelEnableKey   = "com.andvarfolomeev.dockernotify.enable"
+	LabelEnableValue = "true"
+	PingTimeout      = 5 * time.Second
+	ShortIDLen       = 12
 )
