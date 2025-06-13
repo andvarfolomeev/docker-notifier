@@ -177,7 +177,7 @@ func (w *Watcher) Cleanup() {
 func compileErrorPatterns(errorPatterns []string) ([]*regexp.Regexp, error) {
 	patterns := make([]*regexp.Regexp, 0, len(errorPatterns))
 	for _, pattern := range errorPatterns {
-		re, err := regexp.Compile(pattern)
+		re, err := regexp.Compile("(?i" + pattern)
 		if err != nil {
 			return nil, fmt.Errorf("invalid error pattern '%s': %w", pattern, err)
 		}
