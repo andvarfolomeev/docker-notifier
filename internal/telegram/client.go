@@ -5,39 +5,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"time"
 )
 
-const (
-	telegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
-	timeout        = 10 * time.Second
-)
+const telegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
 
 type Client struct {
 	token  string
 	chatID string
-	log    *slog.Logger
 	client *http.Client
 }
 
-func New(token, chatID string, log *slog.Logger, opts ...Option) *Client {
-	if log == nil {
-		log = slog.Default()
-	}
-
+func New(token, chatID string, client *http.Client) *Client {
 	c := &Client{
 		token:  token,
 		chatID: chatID,
-		log:    log,
-		client: &http.Client{
-			Timeout: timeout,
-		},
-	}
-
-	for _, opt := range opts {
-		opt(c)
+		client: client,
 	}
 
 	return c
@@ -70,6 +53,5 @@ func (c *Client) SendMessage(ctx context.Context, message string) error {
 		return fmt.Errorf("telegram API returned non-OK status: %s", resp.Status)
 	}
 
-	c.log.Debug("Successfully sent message to Telegram")
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -41,7 +42,7 @@ func main() {
 	log := slog.New(handler)
 	log.Info("🐳 Docker Notifier starting...")
 
-	telegramClient := telegram.New(cfg.TelegramToken, cfg.TelegramChatID, log)
+	telegramClient := telegram.New(cfg.TelegramToken, cfg.TelegramChatID, &http.Client{})
 
 	containerClient, err := container.NewClient(&container.ClientOptions{
 		LabelEnabled: cfg.LabelEnable,
