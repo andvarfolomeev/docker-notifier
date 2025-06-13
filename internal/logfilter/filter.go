@@ -33,21 +33,27 @@ func FindMatchedLines(patterns []*regexp.Regexp, lines []byte) ([]*MatchedLine, 
 	return res, nil
 }
 
-// Line must be with headers. Read logs with timestamp option
+// Line can be with or without Docker headers
 func ParseLogLine(line []byte) (timestamp, content []byte, err error) {
 	if len(line) == 0 {
 		return
 	}
 
-	// strip Docker log header (first 8 bytes)
-	if len(line) > 8 {
-		line = line[8:]
-	}
-
+	// Try to find space after timestamp
 	parts := bytes.SplitN(line, []byte{' '}, 2)
 	if len(parts) < 2 {
 		err = fmt.Errorf("Malformed log line")
 		return
+	}
+
+	// Check if first part could be Docker header (8 bytes + space)
+	if len(parts[0]) == 8 {
+		// This was probably a header, take next parts
+		parts = bytes.SplitN(parts[1], []byte{' '}, 2)
+		if len(parts) < 2 {
+			err = fmt.Errorf("Malformed log line")
+			return
+		}
 	}
 
 	timestamp = parts[0]
