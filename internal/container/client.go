@@ -20,7 +20,10 @@ type Client struct {
 }
 
 func NewClient(opts *ClientOptions) (*Client, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to init docker client: %w", err)
