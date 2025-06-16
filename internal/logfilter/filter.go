@@ -39,26 +39,25 @@ func ParseLogLine(line []byte) (timestamp, content []byte, err error) {
 		return
 	}
 
-	// Try to find space after timestamp
-	parts := bytes.SplitN(line, []byte{' '}, 2)
-	if len(parts) < 2 {
-		err = fmt.Errorf("Malformed log line")
-		return
+	// Strip 8-byte Docker header if present
+	if len(line) > 8 && isDockerHeader(line[:8]) {
+		line = line[8:]
 	}
 
-	// Check if first part could be Docker header (8 bytes + space)
-	if len(parts[0]) == 8 {
-		// This was probably a header, take next parts
-		parts = bytes.SplitN(parts[1], []byte{' '}, 2)
-		if len(parts) < 2 {
-			err = fmt.Errorf("Malformed log line")
-			return
-		}
+	parts := bytes.SplitN(line, []byte{' '}, 2)
+	if len(parts) < 2 {
+		err = fmt.Errorf("malformed log line: %q", line)
+		return
 	}
 
 	timestamp = parts[0]
 	content = parts[1]
 	return
+}
+
+func isDockerHeader(header []byte) bool {
+	// Docker log headers are 8 bytes, first byte is stream type: 1 = stdout, 2 = stderr
+	return len(header) == 8 && (header[0] == 1 || header[0] == 2)
 }
 
 func IsMatchedLine(patterns []*regexp.Regexp, content []byte) bool {
