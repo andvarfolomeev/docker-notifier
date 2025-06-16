@@ -19,6 +19,8 @@ func RunDispatcher(ctx context.Context, ch <-chan *watcher.MatchedLog, telegramC
 				return
 			}
 
+			slog.Info("Detected error pattern", "containerID", match.Container.ID)
+
 			message := PrepareMessage(match)
 			sendCtx, cancel := context.WithTimeout(ctx, timeout)
 			err := telegramClient.SendMessage(sendCtx, message)
