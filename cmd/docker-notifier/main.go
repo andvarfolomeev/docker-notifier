@@ -91,7 +91,7 @@ func main() {
 
 	log.Info("Watcher started, polling logs", "interval", cfg.Interval)
 	if cfg.LabelEnable {
-		log.Info("Only containers with label %s=%s will be monitored", "com.andvarfolomeev.dockernotify.enable", "true")
+		log.Info("Only containers with label %s=%s will be monitored", "com.andvarfolomeev.dockernotifier.enable", "true")
 	}
 
 	sigChan := make(chan os.Signal, 1)

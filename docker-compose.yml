@@ -26,6 +26,6 @@ services:
     image: alpine:latest
     container_name: example-service
     labels:
-      - "com.andvarfolomeev.dockernotify.enable=true"
+      - "com.andvarfolomeev.dockernotifier.enable=true"
     command: >
       sh -c "while true; do echo 'Normal log line'; sleep 5; echo 'ERROR: This is an error message'; sleep 10; done"

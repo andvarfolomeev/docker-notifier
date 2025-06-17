@@ -44,7 +44,7 @@ services:
   example-service:
     image: alpine:latest
     labels:
-      - "com.andvarfolomeev.dockernotify.enable=true"
+      - "com.andvarfolomeev.dockernotifier.enable=true"
     command: >
       sh -c "while true; do echo 'Normal log line'; sleep 5; echo 'ERROR: This is an error message'; sleep 10; done"
 ```
@@ -82,7 +82,7 @@ docker run -d \
 When `--label-enable` is set, Docker Notifier will only monitor containers with this label:
 
 ```
-com.andvarfolomeev.dockernotify.enable=true
+com.andvarfolomeev.dockernotifier.enable=true
 ```
 
 ## Setup Telegram Bot

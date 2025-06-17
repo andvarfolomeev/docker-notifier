@@ -26,7 +26,7 @@ func Usage() {
 
 func Parse() (*Config, error) {
 	interval := pflag.Int("interval", 5, "Log polling interval in seconds")
-	labelEnable := pflag.Bool("label-enable", false, "Enable label filter: com.andvarfolomeev.dockernotify.enable=true")
+	labelEnable := pflag.Bool("label-enable", false, "Enable label filter: com.andvarfolomeev.dockernotifier.enable=true")
 	telegramToken := pflag.String("telegram-token", "", "Telegram Bot API token")
 	telegramChatID := pflag.String("telegram-chat-id", "", "Target chat ID")
 	debug := pflag.Bool("debug", false, "Enable debug logging")
