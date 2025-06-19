@@ -3,7 +3,7 @@ package container
 import (
 	"strings"
 
-	"github.com/docker/docker/api/types"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
 type Container struct {
@@ -11,7 +11,7 @@ type Container struct {
 	Name string
 }
 
-func ContainerName(container types.Container) string {
+func ContainerName(container docker.Container) string {
 	if len(container.Names) > 0 {
 		name := container.Names[0]
 		return strings.TrimPrefix(name, "/")
@@ -22,7 +22,7 @@ func ContainerName(container types.Container) string {
 	return container.ID
 }
 
-func ConvertContainers(dockerContainers []types.Container) []Container {
+func ConvertContainers(dockerContainers []docker.Container) []Container {
 	containers := make([]Container, 0, len(dockerContainers))
 	for _, dockerContainer := range dockerContainers {
 		containers = append(containers, Container{

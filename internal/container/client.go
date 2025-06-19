@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
 type ClientOptions struct {
@@ -19,22 +18,13 @@ type Client struct {
 	Opts *ClientOptions
 }
 
-func NewClient(opts *ClientOptions) (*Client, error) {
-	cli, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithAPIVersionNegotiation(),
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("Failed to init docker client: %w", err)
-	}
-
-	return &Client{SDK: cli, Opts: opts}, nil
+func NewClient(dockerSDK DockerSDK, opts *ClientOptions) (*Client, error) {
+	return &Client{SDK: dockerSDK, Opts: opts}, nil
 }
 
 func (dc *Client) RunningContainers(ctx context.Context) ([]Container, error) {
 	filterArgs := RunningContainerFilters(dc.Opts)
-	dockerContainers, err := dc.SDK.ContainerList(ctx, types.ContainerListOptions{
+	dockerContainers, err := dc.SDK.ContainerList(ctx, docker.ContainerListOptions{
 		Filters: filterArgs,
 	})
 	if err != nil {
@@ -45,12 +35,12 @@ func (dc *Client) RunningContainers(ctx context.Context) ([]Container, error) {
 	return containers, nil
 }
 
-func (dc *Client) ContainerLogs(ctx context.Context, id, since string, tail int) ([]byte, error) {
+func (dc *Client) ContainerLogs(ctx context.Context, containerID, since string, tail int) ([]byte, error) {
 	if ctx == nil {
 		panic("context must not be nil")
 	}
 
-	if id == "" {
+	if containerID == "" {
 		return nil, errors.New("container ID cannot be empty")
 	}
 
@@ -58,15 +48,15 @@ func (dc *Client) ContainerLogs(ctx context.Context, id, since string, tail int)
 	defer cancel()
 
 	dockerOpts := ContainerLogsOptions(since, tail)
-	logs, err := dc.SDK.ContainerLogs(logCtx, id, dockerOpts)
+	logs, err := dc.SDK.ContainerLogs(logCtx, containerID, dockerOpts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get logs for container %s: %w", id, err)
+		return nil, fmt.Errorf("failed to get logs for container %s: %w", containerID, err)
 	}
 	defer logs.Close()
 
 	buf, err := io.ReadAll(logs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read logs for container %s: %w", id, err)
+		return nil, fmt.Errorf("failed to read logs for container %s: %w", containerID, err)
 	}
 
 	return buf, nil
@@ -74,7 +64,7 @@ func (dc *Client) ContainerLogs(ctx context.Context, id, since string, tail int)
 
 func (dc *Client) Close() error {
 	if dc.SDK != nil {
-		return dc.SDK.Close()
+		dc.SDK.Close()
 	}
 	return nil
 }

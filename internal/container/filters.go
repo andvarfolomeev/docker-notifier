@@ -3,34 +3,33 @@ package container
 import (
 	"fmt"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
-func RunningContainerFilters(opts *ClientOptions) filters.Args {
-	filterArgs := filters.NewArgs()
+func RunningContainerFilters(opts *ClientOptions) docker.Filters {
+	filterArgs := docker.NewFilter()
 	filterArgs.Add("status", "running")
 
 	if opts.LabelEnabled {
 		filterArgs.Add("label", fmt.Sprintf("%s=%s", LabelEnableKey, LabelEnableValue))
 	}
 
-	return filterArgs
+	return *filterArgs
 }
 
-func ContainerLogsOptions(since string, tail int) types.ContainerLogsOptions {
+func ContainerLogsOptions(since string, tail int) docker.ContainerLogsOptions {
 	var tailStr string
 	if tail > 0 {
 		tailStr = fmt.Sprintf("%d", tail)
 	}
 
-	opts := types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Since:      since,
-		Timestamps: true,
-		Follow:     false,
-		Tail:       tailStr,
+	opts := docker.ContainerLogsOptions{
+		Stdout:    true,
+		Stderr:    true,
+		Since:     since,
+		Timestamp: true,
+		Follow:    false,
+		Tail:      tailStr,
 	}
 
 	return opts

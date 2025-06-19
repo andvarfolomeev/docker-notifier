@@ -8,38 +8,38 @@ import (
 	"testing"
 
 	"github.com/andvarfolomeev/docker-notifier/internal/container"
-	"github.com/docker/docker/api/types"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
 type mockDockerSDK struct {
-	containerListFunc  func(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error)
-	containerLogsFunc  func(ctx context.Context, container string, options types.ContainerLogsOptions) (io.ReadCloser, error)
-	pingFunc           func(ctx context.Context) (types.Ping, error)
-	closeFunc          func() error
+	containerListFunc  func(ctx context.Context, options docker.ContainerListOptions) ([]docker.Container, error)
+	containerLogsFunc  func(ctx context.Context, container string, options docker.ContainerLogsOptions) (io.ReadCloser, error)
+	pingFunc           func(ctx context.Context) (string, error)
+	closeFunc          func()
 	containerListCalls int
 	containerLogsCalls int
 	pingCalls          int
 	closeCalls         int
 }
 
-func (m *mockDockerSDK) ContainerList(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+func (m *mockDockerSDK) ContainerList(ctx context.Context, options docker.ContainerListOptions) ([]docker.Container, error) {
 	m.containerListCalls++
 	return m.containerListFunc(ctx, options)
 }
 
-func (m *mockDockerSDK) ContainerLogs(ctx context.Context, container string, options types.ContainerLogsOptions) (io.ReadCloser, error) {
+func (m *mockDockerSDK) ContainerLogs(ctx context.Context, container string, options docker.ContainerLogsOptions) (io.ReadCloser, error) {
 	m.containerLogsCalls++
 	return m.containerLogsFunc(ctx, container, options)
 }
 
-func (m *mockDockerSDK) Ping(ctx context.Context) (types.Ping, error) {
+func (m *mockDockerSDK) Ping(ctx context.Context) (string, error) {
 	m.pingCalls++
 	return m.pingFunc(ctx)
 }
 
-func (m *mockDockerSDK) Close() error {
+func (m *mockDockerSDK) Close() {
 	m.closeCalls++
-	return m.closeFunc()
+	m.closeFunc()
 }
 
 type mockReadCloser struct {
@@ -58,7 +58,7 @@ func TestNewClient(t *testing.T) {
 func TestRunningContainers(t *testing.T) {
 	testCases := []struct {
 		name             string
-		mockContainers   []types.Container
+		mockContainers   []docker.Container
 		mockError        error
 		expectedError    bool
 		expectedContains []container.Container
@@ -66,7 +66,7 @@ func TestRunningContainers(t *testing.T) {
 	}{
 		{
 			name: "successful container retrieval",
-			mockContainers: []types.Container{
+			mockContainers: []docker.Container{
 				{ID: "container1", Names: []string{"/test-container-1"}},
 				{ID: "container2", Names: []string{"/test-container-2"}},
 			},
@@ -91,11 +91,10 @@ func TestRunningContainers(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockSDK := &mockDockerSDK{
-				containerListFunc: func(ctx context.Context, options types.ContainerListOptions) ([]types.Container, error) {
+				containerListFunc: func(ctx context.Context, options docker.ContainerListOptions) ([]docker.Container, error) {
 					return tc.mockContainers, tc.mockError
 				},
-				closeFunc: func() error {
-					return nil
+				closeFunc: func() {
 				},
 			}
 
@@ -203,7 +202,7 @@ func TestContainerLogs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockSDK := &mockDockerSDK{
-				containerLogsFunc: func(ctx context.Context, container string, options types.ContainerLogsOptions) (io.ReadCloser, error) {
+				containerLogsFunc: func(ctx context.Context, container string, options docker.ContainerLogsOptions) (io.ReadCloser, error) {
 					if tc.mockError != nil {
 						return nil, tc.mockError
 					}
@@ -214,13 +213,12 @@ func TestContainerLogs(t *testing.T) {
 						},
 					}, nil
 				},
-				closeFunc: func() error {
-					return nil
+				closeFunc: func() {
 				},
 			}
 
 			if tc.readError != nil {
-				mockSDK.containerLogsFunc = func(ctx context.Context, container string, options types.ContainerLogsOptions) (io.ReadCloser, error) {
+				mockSDK.containerLogsFunc = func(ctx context.Context, container string, options docker.ContainerLogsOptions) (io.ReadCloser, error) {
 					return &mockReadCloser{
 						Reader: &errorReader{err: tc.readError},
 						closeFunc: func() error {
@@ -282,25 +280,16 @@ func (e *errorReader) Read(p []byte) (n int, err error) {
 func TestClose(t *testing.T) {
 	testCases := []struct {
 		name          string
-		mockError     error
 		expectedError bool
 		sdkIsNil      bool
 	}{
 		{
 			name:          "successful close",
-			mockError:     nil,
 			expectedError: false,
 			sdkIsNil:      false,
 		},
 		{
-			name:          "error on close",
-			mockError:     errors.New("close error"),
-			expectedError: true,
-			sdkIsNil:      false,
-		},
-		{
 			name:          "sdk is nil",
-			mockError:     nil,
 			expectedError: false,
 			sdkIsNil:      true,
 		},
@@ -317,8 +306,7 @@ func TestClose(t *testing.T) {
 				}
 			} else {
 				mockSDK := &mockDockerSDK{
-					closeFunc: func() error {
-						return tc.mockError
+					closeFunc: func() {
 					},
 				}
 

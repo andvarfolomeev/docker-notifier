@@ -4,18 +4,18 @@ import (
 	"testing"
 
 	"github.com/andvarfolomeev/docker-notifier/internal/container"
-	"github.com/docker/docker/api/types"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
 func TestContainerName(t *testing.T) {
 	testCases := []struct {
 		name         string
-		container    types.Container
+		container    docker.Container
 		expectedName string
 	}{
 		{
 			name: "container with name",
-			container: types.Container{
+			container: docker.Container{
 				ID:    "abcdef1234567890",
 				Names: []string{"/test-container"},
 			},
@@ -23,7 +23,7 @@ func TestContainerName(t *testing.T) {
 		},
 		{
 			name: "container with multiple names",
-			container: types.Container{
+			container: docker.Container{
 				ID:    "abcdef1234567890",
 				Names: []string{"/first-name", "/second-name"},
 			},
@@ -31,7 +31,7 @@ func TestContainerName(t *testing.T) {
 		},
 		{
 			name: "container without name",
-			container: types.Container{
+			container: docker.Container{
 				ID:    "abcdef1234567890",
 				Names: []string{},
 			},
@@ -39,7 +39,7 @@ func TestContainerName(t *testing.T) {
 		},
 		{
 			name: "container with short ID",
-			container: types.Container{
+			container: docker.Container{
 				ID:    "abcdef",
 				Names: []string{},
 			},
@@ -60,17 +60,17 @@ func TestContainerName(t *testing.T) {
 func TestConvertContainers(t *testing.T) {
 	testCases := []struct {
 		name               string
-		dockerContainers   []types.Container
+		dockerContainers   []docker.Container
 		expectedContainers []container.Container
 	}{
 		{
 			name:               "empty list",
-			dockerContainers:   []types.Container{},
+			dockerContainers:   []docker.Container{},
 			expectedContainers: []container.Container{},
 		},
 		{
 			name: "single container",
-			dockerContainers: []types.Container{
+			dockerContainers: []docker.Container{
 				{ID: "container1", Names: []string{"/test-container-1"}},
 			},
 			expectedContainers: []container.Container{
@@ -79,7 +79,7 @@ func TestConvertContainers(t *testing.T) {
 		},
 		{
 			name: "multiple containers",
-			dockerContainers: []types.Container{
+			dockerContainers: []docker.Container{
 				{ID: "container1", Names: []string{"/test-container-1"}},
 				{ID: "container2", Names: []string{"/test-container-2"}},
 				{ID: "container3", Names: []string{"/test-container-3"}},
@@ -92,7 +92,7 @@ func TestConvertContainers(t *testing.T) {
 		},
 		{
 			name: "containers with different name formats",
-			dockerContainers: []types.Container{
+			dockerContainers: []docker.Container{
 				{ID: "container1", Names: []string{"/test-container-1"}},
 				{ID: "container2", Names: []string{}},
 				{ID: "container3456789012", Names: []string{"/test-container-3"}},

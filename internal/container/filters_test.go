@@ -5,14 +5,13 @@ import (
 	"testing"
 
 	"github.com/andvarfolomeev/docker-notifier/internal/container"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 )
 
 func TestRunningContainerFilters(t *testing.T) {
 	testCases := []struct {
 		name          string
 		labelEnabled  bool
-		expectedArgs  filters.Args
 		expectedCount int
 	}{
 		{
@@ -35,29 +34,26 @@ func TestRunningContainerFilters(t *testing.T) {
 
 			filterArgs := container.RunningContainerFilters(opts)
 
-			// Check that status filter is always present
-			statusValues := filterArgs.Get("status")
-			if len(statusValues) != 1 || statusValues[0] != "running" {
-				t.Errorf("expected filter status=running, got %v", statusValues)
-			}
+			expectedFilter := docker.NewFilter()
+			expectedFilter.Add("status", "running")
 
-			// Check if label is added or not based on settings
-			labelValues := filterArgs.Get("label")
-			expectedLabelValue := fmt.Sprintf("%s=%s", container.LabelEnableKey, container.LabelEnableValue)
+			filterCount := 1
 
 			if tc.labelEnabled {
-				if len(labelValues) != 1 || labelValues[0] != expectedLabelValue {
-					t.Errorf("expected filter label=%s, got %v", expectedLabelValue, labelValues)
-				}
-			} else {
-				if len(labelValues) != 0 {
-					t.Errorf("label filter not expected, but got %v", labelValues)
-				}
+				expectedLabelValue := fmt.Sprintf("%s=%s", container.LabelEnableKey, container.LabelEnableValue)
+				expectedFilter.Add("label", expectedLabelValue)
+				filterCount++
 			}
 
-			// Check total number of filters
-			if len(filterArgs.Keys()) != tc.expectedCount {
-				t.Errorf("expected %d filters, got %d", tc.expectedCount, len(filterArgs.Keys()))
+			expected, _ := expectedFilter.Encode()
+			actual, _ := filterArgs.Encode()
+
+			if expected != actual {
+				t.Errorf("Filter mismatch: expected %s, got %s", expected, actual)
+			}
+
+			if filterArgs.Len() != tc.expectedCount {
+				t.Errorf("expected %d filters, got %d", tc.expectedCount, filterArgs.Len())
 			}
 		})
 	}
@@ -125,21 +121,20 @@ func TestContainerLogsOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := container.ContainerLogsOptions(tc.since, tc.tail)
 
-			// Check all field values
 			if opts.Since != tc.expectedSince {
 				t.Errorf("Since field: expected '%s', got '%s'", tc.expectedSince, opts.Since)
 			}
 			if opts.Tail != tc.expectedTail {
 				t.Errorf("Tail field: expected '%s', got '%s'", tc.expectedTail, opts.Tail)
 			}
-			if opts.ShowStdout != tc.expectedShowStdout {
-				t.Errorf("ShowStdout field: expected %v, got %v", tc.expectedShowStdout, opts.ShowStdout)
+			if opts.Stdout != tc.expectedShowStdout {
+				t.Errorf("Stdout field: expected %v, got %v", tc.expectedShowStdout, opts.Stdout)
 			}
-			if opts.ShowStderr != tc.expectedShowStderr {
-				t.Errorf("ShowStderr field: expected %v, got %v", tc.expectedShowStderr, opts.ShowStderr)
+			if opts.Stderr != tc.expectedShowStderr {
+				t.Errorf("Stderr field: expected %v, got %v", tc.expectedShowStderr, opts.Stderr)
 			}
-			if opts.Timestamps != tc.expectedTimestamps {
-				t.Errorf("Timestamps field: expected %v, got %v", tc.expectedTimestamps, opts.Timestamps)
+			if opts.Timestamp != tc.expectedTimestamps {
+				t.Errorf("Timestamp field: expected %v, got %v", tc.expectedTimestamps, opts.Timestamp)
 			}
 			if opts.Follow != tc.expectedFollow {
 				t.Errorf("Follow field: expected %v, got %v", tc.expectedFollow, opts.Follow)

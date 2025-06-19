@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,6 +17,7 @@ import (
 	"github.com/andvarfolomeev/docker-notifier/internal/alerts"
 	"github.com/andvarfolomeev/docker-notifier/internal/config"
 	"github.com/andvarfolomeev/docker-notifier/internal/container"
+	"github.com/andvarfolomeev/docker-notifier/internal/docker"
 	"github.com/andvarfolomeev/docker-notifier/internal/telegram"
 	"github.com/andvarfolomeev/docker-notifier/internal/watcher"
 )
@@ -44,7 +46,14 @@ func main() {
 
 	telegramClient := telegram.New(cfg.TelegramToken, cfg.TelegramChatID, &http.Client{})
 
-	containerClient, err := container.NewClient(&container.ClientOptions{
+	dclient := docker.New(&http.Client{
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", "/var/run/docker.sock")
+			},
+		},
+	})
+	containerClient, err := container.NewClient(dclient, &container.ClientOptions{
 		LabelEnabled: cfg.LabelEnable,
 	})
 
